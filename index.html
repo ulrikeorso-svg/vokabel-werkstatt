@@ -1,0 +1,1530 @@
+<!doctype html>
+<html lang="de">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Vokabel-Werkstatt</title>
+    <script>var VERSION = "3.0";
+    var ETIKETT = { fr: "Text fr.", de: "Deutsch", vokabeln: "Vokabeln" };</script>
+    <style>
+      :root { font-family: system-ui, sans-serif; color: #0f172a; background: #f8fafc; }
+      * { box-sizing: border-box; }
+      body { margin: 0; background: #f8fafc; }
+      header {
+        background: linear-gradient(to right, #4f46e5, #7c3aed);
+        color: white; padding: 16px;
+      }
+      .kopf-inhalt { max-width: 1500px; margin: 0 auto; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; }
+      h1 { margin: 0; font-size: 22px; }
+      .unterzeile { margin: 2px 0 0; font-size: 13px; color: #e0e7ff; }
+      .leiste { display: flex; gap: 8px; flex-wrap: wrap; }
+      button {
+        border: none; border-radius: 8px; padding: 8px 14px; font-weight: 600;
+        cursor: pointer; font-size: 14px; background: rgba(255,255,255,.2); color: white;
+        transition: background .15s;
+      }
+      button:hover { background: rgba(255,255,255,.35); }
+      button.aktiv { background: white; color: #4f46e5; }
+      main { max-width: 1500px; margin: 0 auto; padding: 20px 16px 40px; }
+
+      /* Sonderzeichen-Leiste */
+      .sonderz-leiste { display: flex; flex-wrap: wrap; gap: 4px; margin-bottom: 16px;
+        background: white; border: 1px solid #e2e8f0; border-radius: 12px; padding: 8px; align-items: center; }
+      .sonderz-leiste .hinweis { font-size: 11px; color: #64748b; margin-right: 4px; }
+      button.zchn { min-width: 34px; padding: 4px 6px; background: #f1f5f9; color: #0f172a;
+        font-weight: 400; font-size: 15px; border: 1px solid #e2e8f0; }
+      button.zchn:hover { background: #e0e7ff; }
+
+      /* Layout: Kategorien-Liste + Karten */
+      .haupt-bereich { display: flex; gap: 16px; align-items: flex-start; flex-wrap: wrap; }
+      .seitenliste { width: 180px; flex: 0 0 auto; background: white;
+        border: 1px solid #e2e8f0; border-radius: 12px; padding: 10px; }
+      .listen-wrap { flex: 1 1 320px; min-width: 0; display: flex; gap: 12px; align-items: flex-start; flex-wrap: wrap; }
+      .karten-spalte { flex: 1 1 300px; min-width: 0; }
+      .tabelle-spalte { flex: 0 0 300px; max-width: 100%; }
+      .tabelle-spalte .abschnitt { margin-bottom: 0; padding: 14px; }
+      .tabelle-spalte h2 { font-size: 15px; }
+      .tabelle-spalte .hilfe { display: none; }
+      .tabelle-spalte .tabelle-wrap { border-radius: 8px; }
+      .tabelle-spalte table.tabelle { min-width: 0; }
+      .tabelle-spalte table.tabelle th { padding: 6px 6px; font-size: 10px; }
+      .tabelle-spalte table.tabelle td { padding: 3px 4px; }
+      .tabelle-spalte table.tabelle input, .tabelle-spalte table.tabelle select { padding: 5px 6px; font-size: 13px; }
+      .tabelle-spalte .tabelle-knoepfe { gap: 6px; }
+      .tabelle-spalte .tabelle-knoepfe button { font-size: 13px; padding: 7px 10px; }
+      @media (max-width: 900px) { .tabelle-spalte { flex: 1 1 100%; } }
+      button.kat { display: block; width: 100%; text-align: left; background: none;
+        color: #334155; font-weight: 400; padding: 6px 8px; border-radius: 6px; }
+      button.kat:hover { background: #eef2ff; color: #4338ca; }
+      button.kat.aktiv { background: #4f46e5; color: white; }
+      .kat-gruppe { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: .05em;
+        color: #64748b; padding: 8px 8px 2px; }
+      .kat-eintrag { display: flex; align-items: center; gap: 4px; }
+      .kat-eintrag button.kat { flex: 1; }
+      .kat-klein { min-width: 26px; padding: 4px 5px; background: #f1f5f9; color: #64748b;
+        font-size: 11px; font-weight: 400; border: 1px solid #e2e8f0; border-radius: 6px; }
+      .kat-klein:hover { background: #e0e7ff; color: #4338ca; }
+      .kat-klein.rot:hover { background: #fee2e2; color: #dc2626; }
+      .kat-neu { display: flex; gap: 4px; margin-top: 8px; border-top: 1px solid #e2e8f0; padding-top: 8px; }
+      .kat-neu input { flex: 1; min-width: 0; border: 1px solid #e2e8f0; border-radius: 6px; padding: 6px 8px; font-size: 13px; }
+
+      /* Karte */
+      .karte { background: white; border: 1px solid #e2e8f0; border-radius: 12px;
+        box-shadow: 0 1px 3px rgba(0,0,0,.05); overflow: hidden; margin-bottom: 14px; }
+      .karte-koerper { display: flex; flex-direction: row; align-items: stretch; }
+      @media (max-width: 700px) { .karte-koerper { flex-direction: column; } .trenner { display: none !important; } }
+      .spalte { padding: 12px; }
+      .spalte-bild { width: 190px; min-width: 190px; }
+      .spalte-text { flex: 1 1 0; min-width: 60px; padding: 12px; }
+      .vok-gruppe { flex: 1.6 1 0; min-width: 140px; display: flex; flex-direction: column; }
+      .vok-titel { text-align: center; font-size: 10px; font-weight: 700; letter-spacing: .05em;
+        text-transform: uppercase; color: #475569; margin-bottom: 4px; }
+      .vok-reihe { display: flex; align-items: stretch; flex: 1; }
+      .vok-reihe .spalte-text { flex: 1 1 0; min-width: 60px; }
+      .textfeld { width: 100%; border: 1px solid #e2e8f0; border-radius: 8px; padding: 8px;
+        font-size: 14px; font-family: inherit; min-height: 120px; max-height: 300px; overflow-y: auto;
+        white-space: pre-wrap; word-break: break-word; background: white; cursor: text; }
+      .textfeld:focus { outline: none; border-color: #818cf8; box-shadow: 0 0 0 3px rgba(129,140,248,.35); }
+      .textfeld:empty::before { content: attr(data-platzhalter); color: #94a3b8; pointer-events: none; }
+      select.kat-wahl { min-width: 185px; }
+      .trenner { width: 10px; cursor: col-resize; background: #e2e8f0; flex: 0 0 auto; position: relative; transition: background .15s; }
+      .trenner::after { content: "↔"; position: absolute; top: 50%; left: 50%;
+        transform: translate(-50%, -50%); font-size: 10px; color: #94a3b8; }
+      .trenner:hover { background: #c7d2fe; }
+      .bild-feld { display: flex; align-items: center; justify-content: center; min-height: 130px;
+        background: #f1f5f9; position: relative; padding: 8px; }
+      .bild-feld img { max-height: 120px; max-width: 100%; object-fit: contain; border-radius: 6px; cursor: zoom-in; transition: opacity .15s; }
+      .bild-feld img:hover { opacity: .8; }
+      .bild-weg { position: absolute; top: 4px; right: 4px; width: 22px; height: 22px;
+        border-radius: 50%; background: rgba(51,65,85,.7); color: white; font-size: 11px; padding: 0; line-height: 1; }
+      .bild-weg:hover { background: #dc2626; }
+      .bild-hinzu { cursor: pointer; color: #94a3b8; font-size: 12px; padding: 20px 10px; text-align: center; display: block; }
+      .bild-hinzu:hover { color: #4f46e5; }
+      .bild-hinzu input { display: none; }
+      label.feld-label { display: block; font-size: 10px; font-weight: 700; letter-spacing: .05em;
+        text-transform: uppercase; color: #475569; margin-bottom: 4px; }
+      textarea { width: 100%; border: 1px solid #e2e8f0; border-radius: 8px; padding: 8px;
+        font-size: 14px; font-family: inherit; resize: vertical; min-height: 120px; }
+      textarea:focus { outline: none; border-color: #818cf8; box-shadow: 0 0 0 3px rgba(129,140,248,.35); }
+      .suche { width: 100%; min-height: 0; padding: 10px 14px; margin-bottom: 12px;
+        border: 1px solid #e2e8f0; border-radius: 8px; font-size: 14px; }
+      .suche:focus { outline: none; border-color: #818cf8; box-shadow: 0 0 0 3px rgba(129,140,248,.35); }
+      .karte-fuss { display: flex; justify-content: space-between; align-items: center; gap: 8px;
+        padding: 8px 12px; border-top: 1px solid #e2e8f0; background: #f8fafc; flex-wrap: wrap; }
+      select { border: 1px solid #e2e8f0; border-radius: 8px; padding: 5px 8px; font-size: 13px;
+        font-family: inherit; background: white; max-width: 100%; }
+      .loeschen { color: #94a3b8; background: none; padding: 4px; font-weight: 400; font-size: 12px; }
+      .loeschen:hover { color: #dc2626; background: none; }
+
+      /* Abschnitte (Hinzufügen) */
+      .abschnitt { background: white; border: 1px solid #e2e8f0; border-radius: 12px;
+        padding: 20px; margin-bottom: 18px; box-shadow: 0 1px 3px rgba(0,0,0,.05); }
+      .abschnitt h2 { margin: 0 0 4px; font-size: 17px; }
+      .hilfe { font-size: 13px; color: #64748b; margin: 0 0 14px; }
+      .ablage { border: 2px dashed #a5b4fc; border-radius: 12px; padding: 28px; text-align: center;
+        background: rgba(238,242,255,.5); cursor: pointer; transition: background .15s; }
+      .ablage:hover { background: #eef2ff; }
+      .ablage .gross { font-size: 34px; margin-bottom: 6px; }
+      .ablage .titel { font-weight: 600; color: #4338ca; }
+      .ablage .klein { font-size: 11px; color: #94a3b8; margin-top: 4px; }
+      .haupt-knopf { background: #4f46e5; }
+      .haupt-knopf:hover { background: #4338ca; }
+      .haupt-knopf:disabled { opacity: .4; cursor: not-allowed; }
+      #ocr-feld { min-height: 110px; }
+
+      /* Tabellen-Bereich */
+      .tabelle-wrap { background: white; border: 1px solid #e2e8f0; border-radius: 12px; overflow: auto; }
+      table.tabelle { width: 100%; border-collapse: collapse; min-width: 520px; }
+      table.tabelle th { background: #4f46e5; color: white; font-size: 11px; text-transform: uppercase;
+        letter-spacing: .05em; padding: 8px 10px; text-align: left; }
+      table.tabelle td { border-top: 1px solid #e2e8f0; padding: 4px 6px; }
+      table.tabelle input { width: 100%; border: 1px solid #e2e8f0; border-radius: 6px; padding: 6px; font-size: 14px; }
+      table.tabelle input:focus { outline: none; border-color: #818cf8; box-shadow: 0 0 0 3px rgba(129,140,248,.35); }
+      .tabelle-knoepfe { display: flex; gap: 8px; margin-top: 12px; flex-wrap: wrap; }
+
+      .leer { text-align: center; color: #64748b; padding: 56px 16px;
+        border: 2px dashed #cbd5e1; border-radius: 12px; background: white; }
+      .zoom-hintergrund { position: fixed; inset: 0; background: rgba(0,0,0,.8); z-index: 50;
+        display: flex; align-items: center; justify-content: center; padding: 16px; }
+      .zoom-hintergrund img { max-width: 100%; max-height: 85vh; border-radius: 8px; }
+      .versteckt { display: none !important; }
+      .zaehler { font-size: 13px; color: #e0e7ff; align-self: center; }
+
+      /* Speicher, Hinweise, Dialoge */
+      .banner { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; padding: 10px 14px;
+        border-radius: 10px; margin-bottom: 10px; font-size: 13px; border: 1px solid #c7d2fe;
+        background: #eef2ff; color: #3730a3; }
+      .banner.warn { background: #fef3c7; border-color: #fcd34d; color: #92400e; }
+      .banner.ok { background: #dcfce7; border-color: #86efac; color: #166534; }
+      .banner span { flex: 1 1 220px; }
+      .banner button { background: #4f46e5; color: white; padding: 5px 10px; font-size: 12px; }
+      .banner button:hover { background: #4338ca; }
+      .banner .x { background: none; color: inherit; padding: 2px 6px; }
+      .banner .x:hover { background: rgba(0,0,0,.08); }
+      .modal-hg { position: fixed; inset: 0; background: rgba(15,23,42,.55); z-index: 60;
+        display: flex; align-items: center; justify-content: center; padding: 16px; overflow: auto; }
+      .modal-box { background: white; border-radius: 14px; padding: 22px; max-width: 580px; width: 100%;
+        max-height: 90vh; overflow: auto; box-shadow: 0 10px 40px rgba(0,0,0,.3); }
+      .modal-box h2 { margin: 0 0 8px; font-size: 18px; }
+      .modal-box h3 { margin: 20px 0 4px; font-size: 14px; color: #4338ca; }
+      .modal-box .hilfe { margin: 0 0 8px; }
+      .modal-knoepfe { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 10px; }
+      .sek-knopf { background: #e2e8f0; color: #0f172a; }
+      .sek-knopf:hover { background: #cbd5e1; }
+    <style>
+      /* Desktop-Einstellungen (Version 3.0): von Ulrike selbst einstellbar */
+      .textfeld { font-size: var(--vw-feldschrift, 14px); }
+      .feld-label { font-size: var(--vw-labelschrift, 12px); }
+      .vok-titel { font-size: var(--vw-labelschrift, 12px); }
+      .vw-einst-knopf {
+        cursor: pointer; border: 1px solid #cbd5e1; background: #fff;
+        border-radius: 8px; padding: 7px 14px; font-size: 14px;
+      }
+      .vw-einst-knopf:hover { background: #f1f5f9; }
+    </style>
+    </style>
+  </head>
+  <body>
+    <header>
+      <div class="kopf-inhalt">
+        <div>
+          <h1>🇫🇷 Vokabel-Werkstatt <span id="titel-version" style="font-weight:400;font-size:15px;color:#c7d2fe;"></span></h1>
+          <p class="unterzeile">Bildvokabeln einlesen, korrigieren, übersetzen &amp; ordnen
+            – <strong id="version-hinweis"></strong></p>
+        </div>
+        <div class="leiste">
+          <span class="zaehler" id="speicher-status"></span>
+          <span class="zaehler" id="zaehler"></span>
+          <button id="btn-daten">💾 Daten</button>
+          <button id="btn-einstellungen" class="vw-einst-knopf" title="Schriftgröße, Beschriftungen, Datenbank">⚙ Einstellungen</button>
+          <button id="reiter-neu">+ Hinzufügen</button>
+          <button id="reiter-karten" class="aktiv">Karten</button>
+        </div>
+      </div>
+    </header>
+
+    <main>
+      <div id="banner"></div>
+      <div class="sonderz-leiste" id="sonderz"></div>
+      <div id="inhalt"></div>
+    </main>
+
+    <div class="zoom-hintergrund versteckt" id="zoom-hg">
+      <div>
+        <img id="zoom-bild" alt="Vergrößertes Bild" />
+        <div style="text-align:center; margin-top:10px;">
+          <button id="zoom-zu">Schließen</button>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      var KEY = "vokabel-werkstatt-v1";
+      var KAT_KEY = "vokabel-werkstatt-kategorien";
+      var karten = [];
+      var kategorien = [];
+      var ansicht = "karten"; // "karten" | "neu" | "tabelle"
+      var aktiveKategorie = null; // null = alle
+      var filter = "";
+      var ocrText = "";
+      var zeilen = [{ fr: "", de: "", kat: "" }];
+      var letztesFeld = null;
+
+      // ---------- Speichern & Laden ----------
+      // Dauerhafter Speicher: Browser-Datenbank (IndexedDB) + optional automatische
+      // Sicherungsdatei auf dem Computer + Export/Import. localStorage wird nur noch
+      // für die Übernahme alter Daten (Migration) gelesen und nie verändert.
+      var DB_NAME = "vokabel-werkstatt-db";
+      var DATEI_TYPEN = [{ description: "Vokabel-Datei (JSON)", accept: { "application/json": [".json"] } }];
+      // Mitgeliefertes Audio (wird einmalig der obersten Karte zugeordnet)
+      var MITGELIEFERT = null; // "Rattenfänger"-Audio (wird später wieder eingebettet)
+      var db = null;
+      var speicherModus = "idb"; // "idb" = Browser-Datenbank, "ls" = Notfall (localStorage)
+      var speicherZustand = "ok"; // ok | offen | fehler
+      var zuletzt = {};
+      var zuletztMeta = "";
+      var speicherTimer = null;
+      var kette = Promise.resolve();
+      var dateiHandle = null;
+      var dateiStatus = "keine"; // keine | bereit | erlaubnis | fehler
+      var dateiLetzte = null;
+      var dateiTimer = null;
+      var dateiKette = Promise.resolve();
+      var bannerListe = {};
+      var kurzTimer = null;
+
+      function baue(tag, klasse, text) {
+        var e = document.createElement(tag);
+        if (klasse) e.className = klasse;
+        if (text != null) e.textContent = text;
+        return e;
+      }
+
+      // --- Hinweise (Banner) ---
+      function bannerSetzen(id, text, knoepfe, art) {
+        bannerListe[id] = { text: text, knoepfe: knoepfe || [], art: art || "info" };
+        bannerZeichnen();
+      }
+      function bannerWeg(id) { delete bannerListe[id]; bannerZeichnen(); }
+      function bannerZeichnen() {
+        var c = document.getElementById("banner");
+        if (!c) return;
+        c.innerHTML = "";
+        Object.keys(bannerListe).forEach(function (id) {
+          var b = bannerListe[id];
+          var d = baue("div", "banner " + b.art);
+          d.appendChild(baue("span", "", b.text));
+          b.knoepfe.forEach(function (k) {
+            var bt = baue("button", "", k.text);
+            bt.addEventListener("click", k.aktion);
+            d.appendChild(bt);
+          });
+          var x = baue("button", "x", "✕");
+          x.title = "Schließen";
+          x.addEventListener("click", function () { bannerWeg(id); });
+          d.appendChild(x);
+          c.appendChild(d);
+        });
+      }
+      function kurzHinweis(text, art) {
+        bannerSetzen("kurz", text, [], art || "ok");
+        clearTimeout(kurzTimer);
+        kurzTimer = setTimeout(function () { bannerWeg("kurz"); }, 7000);
+      }
+
+      // --- Dialog mit Auswahl-Knöpfen ---
+      function modal(titel, absaetze, knoepfe) {
+        return new Promise(function (resolve) {
+          var hg = baue("div", "modal-hg");
+          var box = baue("div", "modal-box");
+          hg.appendChild(box);
+          box.appendChild(baue("h2", "", titel));
+          absaetze.forEach(function (t) { box.appendChild(baue("p", "hilfe", t)); });
+          var leiste = baue("div", "modal-knoepfe");
+          knoepfe.forEach(function (k) {
+            var bt = baue("button", k.haupt ? "haupt-knopf" : "sek-knopf", k.text);
+            bt.addEventListener("click", function () { hg.remove(); resolve(k.wert); });
+            leiste.appendChild(bt);
+          });
+          box.appendChild(leiste);
+          hg.addEventListener("click", function (e) { if (e.target === hg) { hg.remove(); resolve(null); } });
+          document.body.appendChild(hg);
+        });
+      }
+
+      // --- Statusanzeige in der Kopfzeile ---
+      function statusAktualisieren() {
+        var el = document.getElementById("speicher-status");
+        if (!el) return;
+        var t;
+        if (speicherModus === "ls") t = "⚠ Notfall-Speicher";
+        else if (speicherZustand === "fehler") t = "⚠ Speichern fehlgeschlagen";
+        else if (speicherZustand === "offen") t = "● wird gespeichert …";
+        else t = "✓ gespeichert";
+        if (dateiHandle) {
+          if (dateiStatus === "bereit") t += " · 💾 Datei";
+          else if (dateiStatus === "erlaubnis") t += " · ⚠ Datei braucht Erlaubnis";
+          else t += " · ⚠ Dateifehler";
+        }
+        el.textContent = t;
+      }
+      function setStatus(z) { speicherZustand = z; statusAktualisieren(); }
+
+      // --- Karten bereinigen / zusammenführen ---
+      function neueKarte(bild, fr, de, kat, vok, vde) {
+        var jetzt = Date.now();
+        return { id: neueId(), bild: bild, fr: fr, de: de, kategorie: kat || "", vokabeln: vok || "", vokabelnDe: vde || "",
+          erstellt: jetzt, geaendert: jetzt };
+      }
+      function bereinige(k) {
+        k = k || {};
+        return {
+          id: k.id ? String(k.id) : neueId(),
+          bild: typeof k.bild === "string" && k.bild ? k.bild : null,
+          fr: typeof k.fr === "string" ? k.fr : "",
+          de: typeof k.de === "string" ? k.de : "",
+          kategorie: typeof k.kategorie === "string" ? k.kategorie : "",
+          vokabeln: typeof k.vokabeln === "string" ? k.vokabeln : "",
+          vokabelnDe: typeof k.vokabelnDe === "string" ? k.vokabelnDe : "",
+          audio: typeof k.audio === "string" ? k.audio : "",
+          erstellt: typeof k.erstellt === "number" ? k.erstellt : Date.now(),
+          geaendert: typeof k.geaendert === "number" ? k.geaendert : 0
+        };
+      }
+      function beruehrt(k) { k.geaendert = Date.now(); }
+      function kategorienErgaenzen() {
+        karten.forEach(function (k) {
+          if (k.kategorie && kategorien.indexOf(k.kategorie) < 0) kategorien.push(k.kategorie);
+        });
+      }
+      function zusammenfuehren(neueKarten, neueKategorien) {
+        var index = {}, zusatz = [], angelegt = 0, aktualisiert = 0;
+        karten.forEach(function (k) { index[k.id] = k; });
+        neueKarten.map(bereinige).forEach(function (n) {
+          var v = index[n.id];
+          if (!v) { zusatz.push(n); index[n.id] = n; angelegt++; }
+          else if (n.geaendert > v.geaendert) {
+            v.bild = n.bild; v.fr = n.fr; v.de = n.de; v.kategorie = n.kategorie;
+            v.vokabeln = n.vokabeln; v.vokabelnDe = n.vokabelnDe; v.audio = n.audio; v.geaendert = n.geaendert;
+            aktualisiert++;
+          }
+        });
+        karten = karten.concat(zusatz);
+        neueKategorien.forEach(function (c) {
+          if (typeof c === "string" && c && kategorien.indexOf(c) < 0) kategorien.push(c);
+        });
+        kategorienErgaenzen();
+        speichern();
+        return { angelegt: angelegt, aktualisiert: aktualisiert };
+      }
+      function ersetzen(neueKarten, neueKategorien) {
+        karten = neueKarten.map(bereinige);
+        kategorien = [];
+        neueKategorien.forEach(function (c) {
+          if (typeof c === "string" && c && kategorien.indexOf(c) < 0) kategorien.push(c);
+        });
+        kategorienErgaenzen();
+        if (aktiveKategorie !== null && kategorien.indexOf(aktiveKategorie) < 0) aktiveKategorie = null;
+        speichern();
+      }
+
+      // --- Datenbank-Zugriff über SQLite (Hauptprozess der Desktop-App) ---
+      // Gleiche Funktionen wie vorher (IndexedDB), aber alle Zugriffe laufen
+      // über window.vwdb in die SQLite-Datenbank des Hauptprozesses.
+      var DB_READY = false;
+      async function idbOeffnen() {
+        if (!window.vwdb) { throw new Error("Desktop-Datenbank nicht verfügbar"); }
+        var ok = await window.vwdb.init();
+        if (!ok) { throw new Error("Desktop-Datenbank nicht verfügbar"); }
+        DB_READY = true;
+        return { close: function () {} };
+      }
+      function idbLesen(store, key) {
+        return window.vwdb.get(store, key);
+      }
+      function idbLesenAlle(store) {
+        return window.vwdb.getAll(store);
+      }
+      function idbTx(stores, arbeit) {
+        var aktionen = [];
+        var tx = {
+          objectStore: function (name) {
+            return {
+              put: function (wert, schluessel) {
+                aktionen.push({ op: "put", store: name, key: schluessel === undefined ? null : schluessel, value: wert });
+              },
+              delete: function (schluessel) {
+                aktionen.push({ op: "delete", store: name, key: schluessel });
+              }
+            };
+          }
+        };
+        arbeit(tx);
+        return window.vwdb.tx(aktionen);
+      }
+      }
+      function gleich(a, b) {
+        if (!a) return false;
+        return a.bild === b.bild && a.fr === b.fr && a.de === b.de && a.kategorie === b.kategorie &&
+          a.vokabeln === b.vokabeln && a.vokabelnDe === b.vokabelnDe && a.audio === b.audio && a.erstellt === b.erstellt && a.geaendert === b.geaendert;
+      }
+      async function ladenIdb() {
+        var alle = await idbLesenAlle("karten");
+        var meta = (await idbLesen("meta", "stand")) || {};
+        kategorien = Array.isArray(meta.kategorien) ? meta.kategorien.slice() : [];
+        var nachId = {};
+        alle.forEach(function (k) { nachId[k.id] = k; });
+        karten = [];
+        (meta.reihenfolge || []).forEach(function (id) {
+          if (nachId[id]) { karten.push(nachId[id]); delete nachId[id]; }
+        });
+        Object.keys(nachId).forEach(function (id) { karten.push(nachId[id]); });
+        karten = karten.map(bereinige);
+        kategorienErgaenzen();
+        zuletzt = {};
+        karten.forEach(function (k) { zuletzt[k.id] = Object.assign({}, k); });
+        zuletztMeta = JSON.stringify({ kategorien: kategorien.slice(), reihenfolge: karten.map(function (k) { return k.id; }) });
+        await tabelleLadenIdb();
+        await einstellungenLaden();
+      }
+
+      // --- Notfall-Speicher (nur falls IndexedDB nicht geht) ---
+      function altesLesen() {
+        var res = { karten: [], kategorien: [], gefunden: false };
+        try {
+          var roh = localStorage.getItem(KEY);
+          if (roh) { var a = JSON.parse(roh); if (Array.isArray(a)) { res.karten = a; res.gefunden = true; } }
+        } catch (e) {}
+        try {
+          var kr = localStorage.getItem(KAT_KEY);
+          if (kr) { var b = JSON.parse(kr); if (Array.isArray(b)) { res.kategorien = b; res.gefunden = true; } }
+        } catch (e) {}
+        return res;
+      }
+      function ladenLs() {
+        var alt = altesLesen();
+        karten = alt.karten.map(bereinige);
+        kategorien = alt.kategorien.filter(function (c) { return typeof c === "string"; });
+        kategorienErgaenzen();
+        tabelleLadenLs();
+      }
+      function lsSpeichern() {
+        try {
+          localStorage.setItem(KEY, JSON.stringify(karten));
+          localStorage.setItem(KAT_KEY, JSON.stringify(kategorien));
+          setStatus("ok");
+        } catch (e) {
+          setStatus("fehler");
+          bannerSetzen("speicherfehler", "Speicher voll – bitte exportiere deine Daten und entferne einige Bilder.", [], "warn");
+        }
+      }
+
+      // --- Vokabelliste (Tabelle) dauerhaft speichern ---
+      function tabelleSpeichern() {
+        var daten = zeilen.filter(function (z) { return z.fr.trim() || z.de.trim() || z.kat; });
+        if (speicherModus === "ls") {
+          try { localStorage.setItem("vokabel-werkstatt-tabelle", JSON.stringify(daten)); } catch (e) {}
+          return;
+        }
+        kette = kette.then(function () {
+          return idbTx(["meta"], function (tx) { tx.objectStore("meta").put(daten, "tabelle"); });
+        }).catch(function () {});
+      }
+      function tabelleLadenIdb() {
+        return idbLesen("meta", "tabelle").then(function (tab) {
+          if (Array.isArray(tab) && tab.length) {
+            zeilen = tab.map(function (z) {
+              return { fr: typeof z.fr === "string" ? z.fr : "",
+                de: typeof z.de === "string" ? z.de : "",
+                kat: typeof z.kat === "string" ? z.kat : "" };
+            });
+          }
+        }).catch(function () {});
+      }
+      function tabelleLadenLs() {
+        try {
+          var roh = localStorage.getItem("vokabel-werkstatt-tabelle");
+          if (roh) {
+            var tab = JSON.parse(roh);
+            if (Array.isArray(tab) && tab.length) zeilen = tab;
+          }
+        } catch (e) {}
+      }
+
+      // --- Speichern (gesammelt, nur Geändertes) ---
+      function speichern() {
+        setStatus("offen");
+        clearTimeout(speicherTimer);
+        speicherTimer = setTimeout(spuelen, 300);
+        dateiPlanen();
+      }
+      function spuelen() {
+        clearTimeout(speicherTimer);
+        speicherTimer = null;
+        kette = kette.then(speichernJetzt).catch(function () {});
+        return kette;
+      }
+      async function speichernJetzt() {
+        if (speicherModus === "ls") { lsSpeichern(); return; }
+        var geaendert = [], geloescht = [], vorhanden = {};
+        karten.forEach(function (k) {
+          vorhanden[k.id] = true;
+          if (!gleich(zuletzt[k.id], k)) geaendert.push(Object.assign({}, k));
+        });
+        Object.keys(zuletzt).forEach(function (id) { if (!vorhanden[id]) geloescht.push(id); });
+        var meta = { kategorien: kategorien.slice(), reihenfolge: karten.map(function (k) { return k.id; }) };
+        var metaText = JSON.stringify(meta);
+        if (!geaendert.length && !geloescht.length && metaText === zuletztMeta) { setStatus("ok"); return; }
+        try {
+          await idbTx(["karten", "meta"], function (tx) {
+            var ks = tx.objectStore("karten");
+            geaendert.forEach(function (k) { ks.put(k); });
+            geloescht.forEach(function (id) { ks.delete(id); });
+            tx.objectStore("meta").put(meta, "stand");
+          });
+          geaendert.forEach(function (k) { zuletzt[k.id] = k; });
+          geloescht.forEach(function (id) { delete zuletzt[id]; });
+          zuletztMeta = metaText;
+          bannerWeg("speicherfehler");
+          setStatus(speicherTimer ? "offen" : "ok");
+        } catch (e) {
+          setStatus("fehler");
+          var voll = e && e.name === "QuotaExceededError";
+          bannerSetzen("speicherfehler", voll
+            ? "Der Speicherplatz im Browser ist voll. Bitte exportiere deine Daten und entferne einige Bilder."
+            : "Speichern im Browser fehlgeschlagen" + (e && e.message ? " (" + e.message + ")" : "") + ". Bitte exportiere deine Daten zur Sicherheit.",
+            [{ text: "Jetzt exportieren", aktion: herunterladen }], "warn");
+        }
+      }
+      function neueId() {
+        return "k" + Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
+      }
+
+      // ---------- Export / Import ----------
+      function exportObjekt() {
+        return { app: "vokabel-werkstatt", formatVersion: 2, exportiert: new Date().toISOString(),
+          kategorien: kategorien, karten: karten };
+      }
+      function herunterladen() {
+        var blob = new Blob([JSON.stringify(exportObjekt())], { type: "application/json" });
+        var a = document.createElement("a");
+        a.href = URL.createObjectURL(blob);
+        a.download = "vokabel-werkstatt-" + new Date().toISOString().slice(0, 10) + ".json";
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+        setTimeout(function () { URL.revokeObjectURL(a.href); }, 3000);
+      }
+      function jsonLesen(text) {
+        var d = JSON.parse(text);
+        if (Array.isArray(d)) return { karten: d, kategorien: [] };
+        if (d && Array.isArray(d.karten)) return { karten: d.karten, kategorien: Array.isArray(d.kategorien) ? d.kategorien : [] };
+        throw new Error("Unbekanntes Dateiformat");
+      }
+      // Rückgabe: true = importiert, false = abgebrochen
+      async function importieren(d, quelle) {
+        var n = d.karten.length;
+        if (!n && !d.kategorien.length) { kurzHinweis("„" + quelle + "“ enthält keine Karten.", "warn"); return false; }
+        var wahl = "merge";
+        if (karten.length || kategorien.length) {
+          wahl = await modal("Daten importieren", [
+            "„" + quelle + "“ enthält " + n + (n === 1 ? " Karte" : " Karten") + ". Aktuell sind " + karten.length + " gespeichert.",
+            "Zusammenführen: Neue Karten werden hinzugefügt, vorhandene bleiben erhalten (bei Unterschieden gilt die jüngere Änderung).",
+            "Ersetzen: Alle aktuellen Karten werden durch den Inhalt der Datei ersetzt."
+          ], [
+            { text: "Zusammenführen", wert: "merge", haupt: true },
+            { text: "Ersetzen (aktuelle Karten gehen verloren)", wert: "ersetzen" },
+            { text: "Abbrechen", wert: null }
+          ]);
+          if (!wahl) return false;
+        }
+        if (wahl === "ersetzen") {
+          ersetzen(d.karten, d.kategorien);
+          kurzHinweis("✅ " + n + " Karten aus „" + quelle + "“ geladen (aktuelle Daten ersetzt).");
+        } else {
+          var r = zusammenfuehren(d.karten, d.kategorien);
+          kurzHinweis("✅ Zusammengeführt: " + r.angelegt + " neue Karten, " + r.aktualisiert + " aktualisiert.");
+        }
+        zeichnen();
+        return true;
+      }
+      function importDateiWaehlen() {
+        var inp = document.createElement("input");
+        inp.type = "file";
+        inp.accept = ".json,application/json";
+        inp.addEventListener("change", async function () {
+          var f = inp.files[0];
+          if (!f) return;
+          try { await importieren(jsonLesen(await f.text()), f.name); }
+          catch (e) { kurzHinweis("Die Datei konnte nicht gelesen werden – ist es eine Sicherung der Vokabel-Werkstatt?", "warn"); }
+        });
+        inp.click();
+      }
+
+      // ---------- Migration aus dem alten Browser-Speicher ----------
+      async function migrationPruefen() {
+        if (await idbLesen("meta", "migriert")) return;
+        var alt = altesLesen();
+        if (!alt.gefunden || (!alt.karten.length && !alt.kategorien.length)) return;
+        var leer = !karten.length && !kategorien.length;
+        if (leer) {
+          var r = zusammenfuehren(alt.karten, alt.kategorien);
+          await spuelen();
+          if (speicherZustand !== "fehler") {
+            await idbTx(["meta"], function (tx) { tx.objectStore("meta").put({ am: Date.now(), karten: r.angelegt }, "migriert"); });
+            bannerSetzen("migration", "✅ " + r.angelegt + " Karten aus dem bisherigen Browser-Speicher wurden übernommen. " +
+              "Die alten Daten bleiben unverändert erhalten. Tipp: Lege jetzt eine Sicherung an.",
+              [{ text: "Sicherung herunterladen", aktion: herunterladen }, { text: "Daten & Sicherung …", aktion: datenDialog }], "ok");
+          }
+        } else {
+          bannerSetzen("migration", "Im Browser wurden noch alte Daten der früheren Version gefunden. Möchtest du sie jetzt übernehmen (zusammenführen)?",
+            [{ text: "Übernehmen", aktion: altesUebernehmen },
+             { text: "Nicht übernehmen", aktion: function () { migrationAbschliessen(); bannerWeg("migration"); } }], "info");
+        }
+      }
+      async function migrationAbschliessen() {
+        try { await idbTx(["meta"], function (tx) { tx.objectStore("meta").put({ am: Date.now() }, "migriert"); }); } catch (e) {}
+      }
+      async function altesUebernehmen() {
+        var alt = altesLesen();
+        if (!alt.gefunden) { kurzHinweis("Keine alten Daten im Browser gefunden.", "warn"); return; }
+        var r = zusammenfuehren(alt.karten, alt.kategorien);
+        bannerWeg("migration");
+        if (speicherModus === "idb") await migrationAbschliessen();
+        kurzHinweis("✅ Alte Daten übernommen: " + r.angelegt + " neue Karten, " + r.aktualisiert + " aktualisiert.");
+        zeichnen();
+      }
+
+      // ---------- Sicherungsdatei auf dem Computer (Chrome / Edge) ----------
+      function dateiUnterstuetzt() { return false; } // Desktop-App
+      function dateiPlanen() {
+        if (!dateiHandle) return;
+        clearTimeout(dateiTimer);
+        dateiTimer = setTimeout(dateiSchreiben, 2000);
+      }
+      function dateiSchreiben() {
+        clearTimeout(dateiTimer);
+        dateiTimer = null;
+        if (!dateiHandle) return Promise.resolve();
+        dateiKette = dateiKette.then(dateiSchreibenJetzt).catch(function () {});
+        return dateiKette;
+      }
+      async function dateiSchreibenJetzt() {
+        if (!dateiHandle) return;
+        try {
+          var p = await dateiHandle.queryPermission({ mode: "readwrite" });
+          if (p !== "granted") { dateiStatus = "erlaubnis"; dateiErlaubnisBanner(); statusAktualisieren(); return; }
+          var w = await dateiHandle.createWritable();
+          await w.write(new Blob([JSON.stringify(exportObjekt())], { type: "application/json" }));
+          await w.close();
+          dateiStatus = "bereit";
+          dateiLetzte = new Date();
+          bannerWeg("datei");
+        } catch (e) {
+          dateiStatus = "fehler";
+          bannerSetzen("datei", "Die Sicherungsdatei konnte nicht geschrieben werden" + (e && e.message ? " (" + e.message + ")" : "") +
+            ". Deine Daten sind weiterhin im Browser gespeichert.",
+            [{ text: "Datei neu verbinden …", aktion: dateiVerbinden }], "warn");
+        }
+        statusAktualisieren();
+      }
+      function dateiErlaubnisBanner() {
+        bannerSetzen("datei", "Die Sicherungsdatei „" + dateiHandle.name + "“ ist verbunden. Der Browser braucht nach dem Neustart einmal deine Erlaubnis, wieder hineinzuschreiben.",
+          [{ text: "Erlaubnis erneuern", aktion: dateiErlaubnisErneuern }], "warn");
+      }
+      async function dateiErlaubnisErneuern() {
+        if (!dateiHandle) return;
+        try {
+          var p = await dateiHandle.requestPermission({ mode: "readwrite" });
+          if (p === "granted") await dateiSchreiben();
+        } catch (e) {}
+      }
+      async function dateiHandleLaden() {
+        if (!window.showSaveFilePicker) return;
+        var hd = await idbLesen("meta", "dateiHandle");
+        if (!hd) return;
+        dateiHandle = hd;
+        var p = await hd.queryPermission({ mode: "readwrite" });
+        if (p === "granted") dateiStatus = "bereit";
+        else { dateiStatus = "erlaubnis"; dateiErlaubnisBanner(); }
+      }
+      async function dateiVerbinden() {
+        var hd;
+        try { hd = await window.showSaveFilePicker({ suggestedName: "vokabel-werkstatt.json", types: DATEI_TYPEN }); }
+        catch (e) { return; }
+        try {
+          var text = "";
+          try { text = await (await hd.getFile()).text(); } catch (e) {}
+          if (text.trim()) {
+            var d = null;
+            try { d = jsonLesen(text); } catch (e) {}
+            if (!d) {
+              var ok = await modal("Datei überschreiben?", ["Die Datei „" + hd.name + "“ enthält Inhalte, die nicht von der Vokabel-Werkstatt stammen. Sie würde überschrieben."],
+                [{ text: "Überschreiben", wert: true, haupt: true }, { text: "Abbrechen", wert: false }]);
+              if (!ok) return;
+            } else if (d.karten.length || d.kategorien.length) {
+              if (!(await importieren(d, hd.name))) return;
+            }
+          }
+          dateiHandle = hd;
+          dateiStatus = "bereit";
+          bannerWeg("datei");
+          try { await idbTx(["meta"], function (tx) { tx.objectStore("meta").put(hd, "dateiHandle"); }); } catch (e) {}
+          await spuelen();
+          await dateiSchreiben();
+          statusAktualisieren();
+          if (dateiStatus === "bereit") kurzHinweis("✅ Sicherungsdatei verbunden: „" + hd.name + "“. Änderungen werden automatisch dort gespeichert.");
+        } catch (e) {
+          kurzHinweis("Die Datei konnte nicht verbunden werden.", "warn");
+        }
+      }
+      async function dateiTrennen() {
+        dateiHandle = null;
+        dateiStatus = "keine";
+        clearTimeout(dateiTimer);
+        bannerWeg("datei");
+        try { await idbTx(["meta"], function (tx) { tx.objectStore("meta").delete("dateiHandle"); }); } catch (e) {}
+        statusAktualisieren();
+        kurzHinweis("Verbindung zur Sicherungsdatei getrennt. Die Datei selbst bleibt erhalten.");
+      }
+
+      // ---------- Dialog „Daten & Sicherung“ ----------
+      function datenDialog() {
+        var hg = baue("div", "modal-hg");
+        var box = baue("div", "modal-box");
+        hg.appendChild(box);
+        function zu() { hg.remove(); }
+        function knopf(text, fn, haupt) {
+          var b = baue("button", haupt ? "haupt-knopf" : "sek-knopf", text);
+          b.addEventListener("click", function () { zu(); fn(); });
+          return b;
+        }
+        var bytes = 0;
+        karten.forEach(function (k) { bytes += (k.bild ? k.bild.length : 0) + (k.fr || "").length + (k.de || "").length; });
+        var mb = (bytes / 1048576).toFixed(1).replace(".", ",");
+
+        box.appendChild(baue("h2", "", "💾 Daten & Sicherung"));
+
+        box.appendChild(baue("h3", "", "Speicher im Browser"));
+        box.appendChild(baue("p", "hilfe", speicherModus === "idb"
+          ? "Alle Karten werden automatisch in der Browser-Datenbank gespeichert (" + karten.length + " Karten, ca. " + mb + " MB). " +
+            "Sie bleiben nach dem Schließen des Browsers erhalten. Beim Löschen der „Websitedaten“ in den Browser-Einstellungen gehen sie aber verloren – dagegen hilft eine Sicherungsdatei."
+          : "⚠ Die Browser-Datenbank ist nicht verfügbar. Es wird nur im Notfall-Speicher gesichert – bitte regelmäßig exportieren."));
+
+        if (speicherModus === "idb") {
+          box.appendChild(baue("h3", "", "Sicherungsdatei auf dem Computer"));
+          if (window.showSaveFilePicker) {
+            var l1 = baue("div", "modal-knoepfe");
+            if (dateiHandle) {
+              box.appendChild(baue("p", "hilfe", "Verbunden mit „" + dateiHandle.name + "“. Die Datei wird bei jeder Änderung automatisch aktualisiert" +
+                (dateiLetzte ? " (zuletzt " + dateiLetzte.toLocaleTimeString("de-DE", { hour: "2-digit", minute: "2-digit" }) + " Uhr)" : "") + "."));
+              l1.appendChild(knopf("Andere Datei wählen …", dateiVerbinden));
+              l1.appendChild(knopf("Verbindung trennen", dateiTrennen));
+            } else {
+              box.appendChild(baue("p", "hilfe", "Wähle einen Speicherort (z. B. Dokumente oder OneDrive). Danach wird jede Änderung automatisch in diese Datei gesichert. Du kannst sie jederzeit wieder importieren."));
+              l1.appendChild(knopf("Datei anlegen / verbinden …", dateiVerbinden, true));
+            }
+            box.appendChild(l1);
+          } else {
+            box.appendChild(baue("p", "hilfe", "Dein Browser kann nicht automatisch in eine Datei speichern (das geht in Chrome und Edge). Nutze stattdessen „Exportieren“ und sichere regelmäßig."));
+          }
+        }
+
+        box.appendChild(baue("h3", "", "Exportieren & Importieren"));
+        box.appendChild(baue("p", "hilfe", "Die Sicherung ist eine einzelne Datei (.json) mit allen Karten, Bildern und Kategorien. Damit kannst du die Daten auch in einem anderen Browser oder auf einem anderen Computer wieder laden."));
+        var l2 = baue("div", "modal-knoepfe");
+        l2.appendChild(knopf("⬇ Exportieren (Download)", herunterladen, true));
+        l2.appendChild(knopf("⬆ Importieren …", importDateiWaehlen));
+        box.appendChild(l2);
+
+        var alt = altesLesen();
+        if (alt.gefunden && (alt.karten.length || alt.kategorien.length)) {
+          box.appendChild(baue("h3", "", "Alte Daten aus dem Browser"));
+          box.appendChild(baue("p", "hilfe", "Im alten Browser-Speicher (localStorage) liegen " + alt.karten.length + " Karten aus der früheren Version. Sie können (erneut) zusammengeführt werden."));
+          var l3 = baue("div", "modal-knoepfe");
+          l3.appendChild(knopf("Alte Daten übernehmen", altesUebernehmen));
+          box.appendChild(l3);
+        }
+
+        var fuss = baue("div", "modal-knoepfe");
+        fuss.style.marginTop = "22px";
+        fuss.appendChild(knopf("Schließen", function () {}));
+        box.appendChild(fuss);
+        hg.addEventListener("click", function (e) { if (e.target === hg) zu(); });
+        document.body.appendChild(hg);
+      }
+
+      // Beim Verlassen / Tab-Wechsel noch offene Änderungen sofort sichern
+      document.addEventListener("visibilitychange", function () {
+        if (document.visibilityState === "hidden") {
+          spuelen().then(function () { if (dateiTimer) dateiSchreiben(); });
+        }
+      });
+      window.addEventListener("pagehide", function () { spuelen(); });
+
+      // ---------- Einstellungen (Schriftgröße, Beschriftungen, Datenbank) ----------
+      var EINST = { feldGroesse: 14, labelGroesse: 12, etikett: null };
+      function einstellungenAnwenden() {
+        document.documentElement.style.setProperty("--vw-feldschrift", EINST.feldGroesse + "px");
+        document.documentElement.style.setProperty("--vw-labelschrift", EINST.labelGroesse + "px");
+        if (EINST.etikett && typeof EINST.etikett === "object") {
+          if (typeof EINST.etikett.fr === "string" && EINST.etikett.fr) ETIKETT.fr = EINST.etikett.fr;
+          if (typeof EINST.etikett.de === "string" && EINST.etikett.de) ETIKETT.de = EINST.etikett.de;
+          if (typeof EINST.etikett.vokabeln === "string" && EINST.etikett.vokabeln) ETIKETT.vokabeln = EINST.etikett.vokabeln;
+        }
+      }
+      async function einstellungenLaden() {
+        try {
+          var gespeichert = await idbLesen("meta", "einstellungen");
+          if (gespeichert && typeof gespeichert === "object") {
+            if (typeof gespeichert.feldGroesse === "number") EINST.feldGroesse = gespeichert.feldGroesse;
+            if (typeof gespeichert.labelGroesse === "number") EINST.labelGroesse = gespeichert.labelGroesse;
+            if (gespeichert.etikett && typeof gespeichert.etikett === "object") EINST.etikett = gespeichert.etikett;
+          }
+        } catch (e) {}
+        einstellungenAnwenden();
+      }
+      async function einstellungenSpeichern() {
+        try {
+          await idbTx(["meta"], function (tx) { tx.objectStore("meta").put(JSON.parse(JSON.stringify(EINST)), "einstellungen"); });
+        } catch (e) {}
+        einstellungenAnwenden();
+        zeichnen();
+      }
+      function einstellungenDialog() {
+        var alt = document.getElementById("vw-einst-overlay");
+        if (alt) alt.remove();
+        var hg = document.createElement("div");
+        hg.id = "vw-einst-overlay";
+        hg.style.cssText = "position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(15,23,42,.45);z-index:9999;display:flex;align-items:center;justify-content:center;";
+        var box = document.createElement("div");
+        box.style.cssText = "background:#fff;border-radius:12px;padding:22px 26px;max-width:480px;width:92%;box-shadow:0 10px 40px rgba(0,0,0,.25);color:#1e293b;";
+        box.innerHTML =
+          '<h2 style="margin:0 0 14px;font-size:18px;">⚙ Einstellungen</h2>' +
+          '<label style="display:block;font-weight:600;font-size:13px;margin:10px 0 4px;">Schriftgröße der Karten-Felder: <span id="vw-feld-wert"></span> px</label>' +
+          '<input id="vw-feld-slider" type="range" min="11" max="22" step="1" style="width:100%;">' +
+          '<label style="display:block;font-weight:600;font-size:13px;margin:14px 0 4px;">Schriftgröße der Beschriftungen: <span id="vw-label-wert"></span> px</label>' +
+          '<input id="vw-label-slider" type="range" min="9" max="18" step="1" style="width:100%;">' +
+          '<p style="font-weight:600;font-size:13px;margin:16px 0 6px;">Spaltenbeschriftungen</p>' +
+          '<input id="vw-et-fr" type="text" placeholder="Beschriftung Spalte französisch" style="width:100%;margin-bottom:8px;padding:6px 8px;border:1px solid #cbd5e1;border-radius:6px;">' +
+          '<input id="vw-et-de" type="text" placeholder="Beschriftung Spalte deutsch" style="width:100%;margin-bottom:8px;padding:6px 8px;border:1px solid #cbd5e1;border-radius:6px;">' +
+          '<input id="vw-et-vok" type="text" placeholder="Beschriftung Vokabellisten" style="width:100%;padding:6px 8px;border:1px solid #cbd5e1;border-radius:6px;">' +
+          '<p id="vw-db-info" style="font-size:12px;color:#475569;margin:16px 0 4px;word-break:break-all;"></p>' +
+          '<div style="display:flex;gap:10px;flex-wrap:wrap;justify-content:flex-end;margin-top:16px;">' +
+          '<button id="vw-btn-backup" style="padding:8px 14px;border:1px solid #cbd5e1;border-radius:8px;background:#fff;cursor:pointer;">🗄 Datenbank sichern</button>' +
+          '<button id="vw-btn-ok" style="padding:8px 16px;border:0;border-radius:8px;background:#2563eb;color:#fff;cursor:pointer;font-weight:600;">Übernehmen</button>' +
+          '<button id="vw-btn-close" style="padding:8px 14px;border:1px solid #cbd5e1;border-radius:8px;background:#fff;cursor:pointer;">Abbrechen</button>' +
+          '</div>';
+        hg.appendChild(box);
+        document.body.appendChild(hg);
+        var feldR = box.querySelector("#vw-feld-slider"), labelR = box.querySelector("#vw-label-slider");
+        feldR.value = EINST.feldGroesse; labelR.value = EINST.labelGroesse;
+        function werteZeigen() {
+          box.querySelector("#vw-feld-wert").textContent = feldR.value;
+          box.querySelector("#vw-label-wert").textContent = labelR.value;
+        }
+        werteZeigen();
+        feldR.addEventListener("input", werteZeigen);
+        labelR.addEventListener("input", werteZeigen);
+        box.querySelector("#vw-et-fr").value = ETIKETT.fr;
+        box.querySelector("#vw-et-de").value = ETIKETT.de;
+        box.querySelector("#vw-et-vok").value = ETIKETT.vokabeln;
+        if (window.vwdb && window.vwdb.info) {
+          window.vwdb.info().then(function (i) {
+            if (i && i.pfad) box.querySelector("#vw-db-info").textContent = "Datenbank-Datei: " + i.pfad;
+          }).catch(function () {});
+        }
+        box.querySelector("#vw-btn-close").addEventListener("click", function () { hg.remove(); });
+        hg.addEventListener("click", function (e) { if (e.target === hg) hg.remove(); });
+        box.querySelector("#vw-btn-backup").addEventListener("click", function () {
+          if (!window.vwdb || !window.vwdb.backup) { kurzHinweis("Sichern ist nur in der Desktop-App möglich.", "warn"); return; }
+          window.vwdb.backup().then(function (r) {
+            hg.remove();
+            if (r && r.ok) kurzHinweis("✅ Datenbank gesichert: " + r.pfad, "ok");
+          }).catch(function () { kurzHinweis("Sichern fehlgeschlagen.", "warn"); });
+        });
+        box.querySelector("#vw-btn-ok").addEventListener("click", function () {
+          EINST.feldGroesse = parseInt(feldR.value, 10) || 14;
+          EINST.labelGroesse = parseInt(labelR.value, 10) || 12;
+          EINST.etikett = {
+            fr: box.querySelector("#vw-et-fr").value.trim() || "Text fr.",
+            de: box.querySelector("#vw-et-de").value.trim() || "Deutsch",
+            vokabeln: box.querySelector("#vw-et-vok").value.trim() || "Vokabeln"
+          };
+          einstellungenSpeichern();
+          hg.remove();
+        });
+      }
+
+      // ---------- Start ----------
+      // ---------- Start ----------
+      async function start() {
+        document.getElementById("version-hinweis").textContent = "Version " + VERSION;
+        document.getElementById("titel-version").textContent = VERSION;
+        document.title = "Vokabel-Werkstatt " + VERSION;
+        sonderzZeichnen();
+        document.getElementById("inhalt").innerHTML = '<div class="leer">Daten werden geladen …</div>';
+        try {
+          db = await idbOeffnen();
+          db.onversionchange = function () { db.close(); };
+          speicherModus = "idb";
+          await ladenIdb();
+        } catch (e) {
+          db = null;
+          speicherModus = "ls";
+          ladenLs();
+          bannerSetzen("modus", "⚠ Die Browser-Datenbank ist in diesem Browser nicht verfügbar (z. B. privates Fenster). " +
+            "Es wird nur im Notfall-Speicher gesichert – bitte regelmäßig exportieren.",
+            [{ text: "Jetzt exportieren", aktion: herunterladen }], "warn");
+        }
+        if (speicherModus === "idb") {
+          try { await migrationPruefen(); } catch (e) {}
+          try { await dateiHandleLaden(); } catch (e) {}
+          if (navigator.storage && navigator.storage.persist) { navigator.storage.persist().catch(function () {}); }
+        }
+        // Mitgeliefertes Audio einmalig der obersten Karte zuordnen
+        if (MITGELIEFERT && karten.length) {
+          var zugeteilt = false;
+          try {
+            zugeteilt = speicherModus === "idb"
+              ? !!(await idbLesen("meta", "audioZugeteilt"))
+              : !!localStorage.getItem("vokabel-werkstatt-audioZugeteilt");
+          } catch (e) {}
+          if (!zugeteilt) {
+            if (!karten.some(function (k) { return k.audio; })) {
+              karten[0].audio = MITGELIEFERT.audio;
+              karten[0].geaendert = Date.now();
+              speichern();
+            }
+            try {
+              if (speicherModus === "idb") {
+                await idbTx(["meta"], function (tx) { tx.objectStore("meta").put({ am: Date.now() }, "audioZugeteilt"); });
+              } else {
+                localStorage.setItem("vokabel-werkstatt-audioZugeteilt", "1");
+              }
+            } catch (e) {}
+          }
+        }
+        statusAktualisieren();
+        zeichnen();
+      }
+
+      // ---------- Bilder ----------
+      function dateiZuBild(datei) {
+        return new Promise(function (resolve, reject) {
+          var r = new FileReader();
+          r.onload = function () { resolve(r.result); };
+          r.onerror = reject;
+          r.readAsDataURL(datei);
+        });
+      }
+      function verkleinern(dataUrl) {
+        return new Promise(function (resolve) {
+          var img = new Image();
+          img.onload = function () {
+            var w = img.width, h = img.height;
+            var s = Math.min(1, 1200 / Math.max(w, h));
+            w = Math.round(w * s); h = Math.round(h * s);
+            var c = document.createElement("canvas");
+            c.width = w; c.height = h;
+            var ctx = c.getContext("2d");
+            if (!ctx) return resolve(dataUrl);
+            ctx.drawImage(img, 0, 0, w, h);
+            var q = 0.85, out = c.toDataURL("image/jpeg", q);
+            while (out.length / 1024 > 300 && q > 0.4) {
+              q -= 0.15;
+              out = c.toDataURL("image/jpeg", q);
+            }
+            resolve(out);
+          };
+          img.onerror = function () { resolve(dataUrl); };
+          img.src = dataUrl;
+        });
+      }
+      async function bilderNeu(dateien) {
+        var liste = [];
+        for (var i = 0; i < dateien.length; i++) {
+          if (dateien[i].type && dateien[i].type.indexOf("image/") === 0) liste.push(dateien[i]);
+        }
+        if (!liste.length) return;
+        var neue = [];
+        for (var j = 0; j < liste.length; j++) {
+          var roh = await dateiZuBild(liste[j]);
+          var klein = await verkleinern(roh);
+          neue.push({ id: neueId(), bild: klein, fr: "", de: "",
+            kategorie: aktiveKategorie || "", erstellt: Date.now(), geaendert: Date.now() });
+        }
+        karten = neue.concat(karten);
+        speichern();
+        ansicht = "karten";
+        zeichnen();
+      }
+      async function bildErsetzen(id, datei) {
+        if (!datei || !datei.type || datei.type.indexOf("image/") !== 0) return;
+        var roh = await dateiZuBild(datei);
+        var klein = await verkleinern(roh);
+        var k = karten.find(function (x) { return x.id === id; });
+        if (k) { k.bild = klein; beruehrt(k); speichern(); zeichnen(); }
+      }
+
+      // ---------- OCR ----------
+      function ausOcrErzeugen() {
+        var z = ocrText.split("\n").map(function (z2) { return z2.trim(); })
+          .filter(function (z2) { return z2.length > 0; });
+        if (!z.length) return;
+        var neue = z.map(function (t) {
+          return { id: neueId(), bild: null, fr: t, de: "",
+            kategorie: aktiveKategorie || "", erstellt: Date.now(), geaendert: Date.now() };
+        });
+        karten = neue.concat(karten);
+        ocrText = "";
+        speichern();
+        ansicht = "karten";
+        zeichnen();
+      }
+
+      // ---------- Sonderzeichen ----------
+      var SONDERZ = ["é","è","ê","ë","à","â","ç","î","ï","ô","ö","ù","û","ü","œ","æ","«","»","’","–","→","|----|"];
+      function sonderzZeichnen() {
+        var el = document.getElementById("sonderz");
+        var html = '<span class="hinweis">Französische Zeichen – ins aktive Feld einfügen:</span>';
+        SONDERZ.forEach(function (z) { html += '<button class="zchn" data-z="' + z + '">' + z + "</button>"; });
+        html += '<span class="hinweis" style="margin-left:10px;">Format (Text markieren):</span>';
+        html += '<button class="zchn fmt" data-fmt="bold" title="Fett"><b>B</b></button>';
+        html += '<button class="zchn fmt" data-fmt="underline" title="Unterstrichen"><u>U</u></button>';
+        [["rot", "#dc2626"], ["grün", "#16a34a"], ["blau", "#2563eb"]].forEach(function (f) {
+          html += '<button class="zchn fmt" data-farbe="' + f[1] + '" title="' + f[0] +
+            '" style="color:' + f[1] + ';font-weight:700;">A</button>';
+        });
+        el.innerHTML = html;
+        el.querySelectorAll(".zchn").forEach(function (b) {
+          b.addEventListener("mousedown", function (e) { e.preventDefault(); }); // Fokus im Textfeld halten
+          b.addEventListener("click", function () {
+            var ziel = letztesFeld;
+            if (!ziel) { alert("Klicke zuerst in ein Textfeld, dann auf das Zeichen."); return; }
+            if (ziel.isContentEditable) {
+              ziel.focus();
+              document.execCommand("insertText", false, b.getAttribute("data-z"));
+              return;
+            }
+            var s = ziel.selectionStart, en = ziel.selectionEnd;
+            ziel.value = ziel.value.slice(0, s) + b.getAttribute("data-z") + ziel.value.slice(en);
+            ziel.selectionStart = ziel.selectionEnd = s + 1;
+            ziel.dispatchEvent(new Event("input", { bubbles: true }));
+            ziel.focus();
+          });
+        });
+        el.querySelectorAll(".fmt").forEach(function (b) {
+          b.addEventListener("mousedown", function (e) { e.preventDefault(); });
+          b.addEventListener("click", function () {
+            var ziel = letztesFeld;
+            if (!ziel || !ziel.isContentEditable) {
+              alert("Formatieren geht in den Karten-Textfeldern: Text markieren und Knopf drücken.");
+              return;
+            }
+            ziel.focus();
+            try { document.execCommand("styleWithCSS", false, true); } catch (e) {}
+            if (b.getAttribute("data-fmt")) document.execCommand(b.getAttribute("data-fmt"), false, "");
+            else document.execCommand("foreColor", false, b.getAttribute("data-farbe"));
+          });
+        });
+      }
+      document.addEventListener("focusin", function (e) {
+        var t = e.target;
+        if (t && (t.tagName === "TEXTAREA" || (t.tagName === "INPUT" && t.type === "text") ||
+                  (t.isContentEditable && t.classList && t.classList.contains("textfeld")))) {
+          letztesFeld = t;
+        }
+      });
+
+      // ---------- Zeichnen ----------
+      function zeichnen() {
+        var inhalt = document.getElementById("inhalt");
+        document.getElementById("zaehler").textContent =
+          karten.length + (karten.length === 1 ? " Karte" : " Karten");
+        if (ansicht === "neu") { zeichneNeu(inhalt); return; }
+        zeichneKarten(inhalt);
+      }
+
+      function zeichneNeu(el) {
+        el.innerHTML =
+          '<section class="abschnitt">' +
+          '<h2>1️⃣ Bild(er) einfügen</h2>' +
+          '<p class="hilfe">Wähle eine oder mehrere Bilddateien aus – oder ziehe sie hierher. ' +
+          'Pro Bild entsteht eine Karte' +
+          (aktiveKategorie ? ' in der Kategorie „' + escHtml(aktiveKategorie) + '“' : "") + '.</p>' +
+          '<div class="ablage" id="ablage">' +
+          '<div class="gross">🖼️</div>' +
+          '<div class="titel">Dateien hierher ziehen oder klicken</div>' +
+          '<div class="klein">PNG, JPG – mehrere gleichzeitig möglich</div>' +
+          '<input type="file" id="datei-eingabe" accept="image/*" multiple style="display:none" />' +
+          '</div></section>' +
+          '<section class="abschnitt">' +
+          '<h2>2️⃣ OCR-Text einfügen (optional)</h2>' +
+          '<p class="hilfe">Text von Online-OCR oder Copyfish hier einfügen – jede Zeile ' +
+          'wird eine eigene Karte.</p>' +
+          '<textarea id="ocr-feld" rows="6" placeholder="z. B.\nle restaurant\nl\u2019addition, s\u2019il vous pla\u00eet\n\u2026"></textarea>' +
+          '<div style="margin-top:12px;"><button class="haupt-knopf" id="btn-ocr">Zeilen als Karten anlegen →</button></div>' +
+          '</section>';
+
+        var ablage = el.querySelector("#ablage");
+        var eingabe = el.querySelector("#datei-eingabe");
+        ablage.addEventListener("click", function () { eingabe.click(); });
+        eingabe.addEventListener("change", function () { bilderNeu(eingabe.files); });
+        ablage.addEventListener("dragover", function (e) { e.preventDefault(); });
+        ablage.addEventListener("drop", function (e) {
+          e.preventDefault();
+          bilderNeu(e.dataTransfer.files);
+        });
+        var ocrFeld = el.querySelector("#ocr-feld");
+        ocrFeld.value = ocrText;
+        ocrFeld.addEventListener("input", function (e) {
+          ocrText = e.target.value;
+          el.querySelector("#btn-ocr").disabled = !ocrText.trim();
+        });
+        el.querySelector("#btn-ocr").addEventListener("click", ausOcrErzeugen);
+        el.querySelector("#btn-ocr").disabled = !ocrText.trim();
+      }
+
+      function tabelleVorbereiten() {
+        while (zeilen.length > 1 && !zeilen[zeilen.length - 1].fr && !zeilen[zeilen.length - 1].de) {
+          zeilen.pop();
+        }
+        zeilen.push({ fr: "", de: "", kat: "" });
+      }
+
+      function tabelleHtml() {
+        tabelleVorbereiten();
+        var html = '<div class="abschnitt"><h2>📋 Vokabeln eintragen</h2>' +
+          '<p class="hilfe">Zeile ausfüllen – mit „Als Karten übernehmen“ werden alle ausgefüllten Zeilen gespeichert. Die Liste bleibt erhalten.</p>' +
+          '<div class="tabelle-wrap"><table class="tabelle">' +
+          "<thead><tr><th>🇫🇷 Text</th><th>🇩🇪 Übersetzung</th><th>Kat.</th></tr></thead><tbody>";
+        zeilen.forEach(function (z, i) {
+          html += "<tr>" +
+            '<td><input type="text" data-idx="' + i + '" data-f="fr" value="' + escAttr(z.fr) + '" placeholder="français…"></td>' +
+            '<td><input type="text" data-idx="' + i + '" data-f="de" value="' + escAttr(z.de) + '" placeholder="deutsch…"></td>' +
+            '<td>' + katSelect(z.kat, ' data-idx="' + i + '"') + "</td></tr>";
+        });
+        html += "</tbody></table></div><div class='tabelle-knoepfe'>" +
+          '<button id="btn-zeile">+ Zeile</button>' +
+          '<button class="haupt-knopf" id="btn-uebernehmen">Als Karten übernehmen →</button>' +
+          "</div></div>";
+        return html;
+      }
+
+      function tabelleEreignisse(root) {
+        root.querySelectorAll("input[data-idx]").forEach(function (inp) {
+          inp.addEventListener("input", function () {
+            var idx = +inp.getAttribute("data-idx");
+            zeilen[idx][inp.getAttribute("data-f")] = inp.value;
+            tabelleSpeichern();
+            // Wird die letzte Zeile ausgefüllt, automatisch eine neue anhängen
+            if (idx === zeilen.length - 1 && inp.value) {
+              var letztesFeld = inp.getAttribute("data-f");
+              zeilen.push({ fr: "", de: "", kat: "" });
+              tabelleSpeichern();
+              zeichnen();
+              var neuZeile = document.querySelectorAll('input[data-idx="' + (zeilen.length - 1) + '"]');
+              var fokusNeu = letztesFeld === "fr" ? neuZeile[0] : neuZeile[1];
+              if (fokusNeu) { fokusNeu.focus(); }
+            }
+          });
+        });
+        root.querySelectorAll("select[data-idx]").forEach(function (sel) {
+          sel.addEventListener("change", function () {
+            zeilen[+sel.getAttribute("data-idx")].kat = sel.value;
+            tabelleSpeichern();
+          });
+        });
+        root.querySelector("#btn-zeile").addEventListener("click", function () {
+          zeilen.push({ fr: "", de: "", kat: "" });
+          tabelleSpeichern();
+          zeichnen();
+        });
+        root.querySelector("#btn-uebernehmen").addEventListener("click", function () {
+          var neue = zeilen.filter(function (z) { return z.fr.trim() || z.de.trim(); }).map(function (z) {
+            return neueKarte(null, z.fr, z.de, z.kat || aktiveKategorie || "");
+          });
+          if (!neue.length) { alert("Es sind noch keine Zeilen ausgefüllt."); return; }
+          karten = neue.concat(karten);
+          zeilen = [{ fr: "", de: "", kat: "" }];
+          tabelleSpeichern();
+          speichern();
+          zeichnen();
+        });
+      }
+
+      function kategorieGruppen() {
+        var gruppen = {}, folge = [];
+        kategorien.forEach(function (kat) {
+          var teile = kat.split(" > ");
+          var ueber = teile.length > 1 ? teile[0] : "";
+          if (!gruppen[ueber]) { gruppen[ueber] = []; folge.push(ueber); }
+          gruppen[ueber].push({ name: kat, label: teile.length > 1 ? teile.slice(1).join(" > ") : kat });
+        });
+        return { gruppen: gruppen, folge: folge };
+      }
+
+      function katSelect(wert, extra) {
+        var gr = kategorieGruppen();
+        var h = "<select" + (extra || "") + "><option value=\"\">– ohne –</option>";
+        gr.folge.forEach(function (ueber) {
+          if (ueber) h += '<optgroup label="' + escAttr(ueber) + '">';
+          gr.gruppen[ueber].forEach(function (g) {
+            h += '<option value="' + escAttr(g.name) + '"' + (g.name === wert ? " selected" : "") + ">" + escHtml(g.label) + "</option>";
+          });
+          if (ueber) h += "</optgroup>";
+        });
+        return h + "</select>";
+      }
+
+      function escHtml(s) { return (s || "").replace(/&/g, "&amp;").replace(/</g, "&lt;"); }
+      function escAttr(s) { return escHtml(s).replace(/"/g, "&quot;"); }
+
+      function zeichneKarten(el) {
+        var sichtbare = karten.filter(function (k) {
+          if (aktiveKategorie !== null && (k.kategorie || "") !== aktiveKategorie) return false;
+          if (!filter) return true;
+          var f = filter.toLowerCase();
+          return (k.fr || "").toLowerCase().indexOf(f) >= 0 ||
+                 (k.de || "").toLowerCase().indexOf(f) >= 0;
+        });
+
+        // Seitenliste: Kategorienamen, nach Überkategorie gruppiert
+        var liste = '<div class="seitenliste">';
+        liste += '<button class="kat' + (aktiveKategorie === null ? " aktiv" : "") + '" data-kat="__alle__">Alle</button>';
+        var gr = kategorieGruppen();
+        gr.folge.forEach(function (ueber) {
+          if (ueber) liste += '<div class="kat-gruppe">' + escHtml(ueber) + "</div>";
+          gr.gruppen[ueber].forEach(function (g) {
+            liste += '<div class="kat-eintrag"><button class="kat' + (g.name === aktiveKategorie ? " aktiv" : "") +
+              '" data-kat="' + escAttr(g.name) + '">' + escHtml(g.label) + "</button>" +
+              '<button class="kat-klein" data-umbenennen="' + escAttr(g.name) + '" title="Kategorie umbenennen">✎</button>' +
+              '<button class="kat-klein rot" data-loeschen="' + escAttr(g.name) + '" title="Kategorie löschen">🗑</button></div>';
+          });
+        });
+        liste += '<div class="kat-neu"><input type="text" id="neue-kat" placeholder="Seite > Kategorie…">' +
+          '<button id="btn-neue-kat" title="Kategorie hinzufügen">+</button></div>';
+        liste += '<div style="font-size:10px;color:#94a3b8;margin-top:6px;line-height:1.4;">Tipp: „Seite &gt; Kategorie“ (mit „&gt;“) legt eine Überkategorie an, z. B. „FB-Seite &gt; Tiere“ – sie erscheint dann als Überschrift über den Kategorien in dieser Liste.</div>';
+        liste += "</div>";
+
+        var wrap = '<div class="listen-wrap">' +
+          '<div class="karten-spalte">' +
+          '<input class="suche" id="suchfeld" placeholder="🔍 Suchen (französisch oder deutsch)…" value="' +
+          escAttr(filter) + '" />';
+
+        if (!sichtbare.length) {
+          wrap += '<div class="leer"><p style="font-weight:600;margin:0 0 4px;">Keine Karten' +
+            (aktiveKategorie !== null ? " in dieser Kategorie" : "") + "</p>" +
+            '<p style="font-size:13px;margin:0;">Trage unten neue Vokabeln in die Karten ein oder wechsle zu „+ Hinzufügen“ (Bilder/OCR).</p></div>';
+        } else {
+          sichtbare.forEach(function (k) {
+            wrap +=
+              '<div class="karte" data-id="' + k.id + '">' +
+              '<div class="karte-koerper">' +
+              '<div class="spalte spalte-bild bild-feld">' +
+              (k.bild
+                ? '<img src="' + k.bild + '" class="zoom-ausloeser" alt="Vokabelbild" title="Klicken zum Vergrößern" />' +
+                  '<button class="bild-weg" title="Bild entfernen">✕</button>'
+                : '<label class="bild-hinzu" title="Bild hinzufügen">🖼️<br>Bild hinzufügen' +
+                  '<input type="file" accept="image/*" class="bild-neu-input"></label>') +
+              "</div>" +
+              '<div class="trenner" role="separator"></div>' +
+              '<div class="spalte-text"><label class="feld-label">' + ETIKETT.fr + '</label>' +
+              '<div class="textfeld" contenteditable="true" spellcheck="true" lang="fr" data-feld="fr" data-platzhalter="französischer Text (korrigierbar)">' + (k.fr || "") + "</div></div>" +
+              '<div class="trenner" role="separator"></div>' +
+              '<div class="spalte-text"><label class="feld-label">' + ETIKETT.de + '</label>' +
+              '<div class="textfeld" contenteditable="true" spellcheck="true" lang="de" data-feld="de" data-platzhalter="deutsche Übersetzung">' + (k.de || "") + "</div></div>" +
+              '<div class="trenner" role="separator"></div>' +
+              '<div class="vok-gruppe">' +
+              '<div class="vok-titel">' + ETIKETT.vokabeln + '</div>' +
+              '<div class="vok-reihe">' +
+              '<div class="spalte-text"><div class="textfeld" contenteditable="true" spellcheck="true" lang="fr" data-feld="vokabeln" data-platzhalter="z. B. la pomme = der Apfel" style="font-size:13px;">' + (k.vokabeln || "") + "</div></div>" +
+              '<div class="trenner" role="separator"></div>' +
+              '<div class="spalte-text"><div class="textfeld" contenteditable="true" spellcheck="true" lang="de" data-feld="vokabelnDe" data-platzhalter="z. B. der Apfel" style="font-size:13px;">' + (k.vokabelnDe || "") + "</div></div>" +
+              "</div></div>" +
+              "</div>" +
+              '<div class="karte-fuss"><span style="font-size:12px;color:#94a3b8;">Kategorie:</span>' +
+              katSelect(k.kategorie || "", ' class="kat-wahl"') +
+              (k.audio
+                ? '<button class="loeschen audio-play" title="Audio abspielen / anhalten">▶ Audio</button>' +
+                  '<button class="loeschen audio-weg" title="Audio entfernen">Audio entfernen</button>'
+                : '<label class="loeschen audio-hinzu" title="Audio hinzufügen (z. B. MP3)">Audio hinzufügen' +
+                  '<input type="file" accept="audio/*" class="audio-neu-input" style="display:none"></label>') +
+              '<button class="loeschen">🗑️ Karte löschen</button></div>' +
+              "</div>";
+          });
+        }
+        wrap += "</div>" + // karten-spalte
+          "</div>";
+
+        el.innerHTML = '<div class="haupt-bereich">' + liste + wrap + "</div>";
+
+        // Kategorie-Liste: Ereignisse
+        el.querySelectorAll("button.kat[data-kat]").forEach(function (b) {
+          b.addEventListener("click", function () {
+            aktiveKategorie = b.getAttribute("data-kat") === "__alle__" ? null : b.getAttribute("data-kat");
+            zeichnen();
+          });
+        });
+        el.querySelector("#btn-neue-kat").addEventListener("click", function () {
+          var feld = el.querySelector("#neue-kat");
+          var name = feld.value.trim();
+          if (!name) { feld.focus(); return; }
+          if (kategorien.indexOf(name) < 0) {
+            kategorien.push(name);
+            speichern();
+            aktiveKategorie = name;
+          }
+          zeichnen();
+        });
+        el.querySelector("#neue-kat").addEventListener("keydown", function (e) {
+          if (e.key === "Enter") el.querySelector("#btn-neue-kat").click();
+        });
+
+        // Kategorie umbenennen
+        el.querySelectorAll("button[data-umbenennen]").forEach(function (b) {
+          b.addEventListener("click", function () {
+            var alt = b.getAttribute("data-umbenennen");
+            var neu = prompt("Kategorie umbenennen (Überkategorie mit „>“ möglich, z. B. „FB-Seite > Kategorie“):", alt);
+            if (!neu) return;
+            neu = neu.trim();
+            if (!neu || neu === alt) return;
+            if (kategorien.indexOf(neu) >= 0) {
+              alert("Diese Kategorie gibt es schon.");
+              return;
+            }
+            kategorien = kategorien.map(function (k) { return k === alt ? neu : k; });
+            karten.forEach(function (k) {
+              if (k.kategorie === alt) { k.kategorie = neu; beruehrt(k); }
+            });
+            if (aktiveKategorie === alt) aktiveKategorie = neu;
+            speichern();
+            zeichnen();
+          });
+        });
+
+        // Kategorie löschen (Karten bleiben, werden „ohne Kategorie“)
+        el.querySelectorAll("button[data-loeschen]").forEach(function (b) {
+          b.addEventListener("click", function () {
+            var kat = b.getAttribute("data-loeschen");
+            if (!confirm("Kategorie „" + kat + "“ löschen?\nDie Karten bleiben erhalten und werden dann „ohne Kategorie“ zugeordnet.")) return;
+            kategorien = kategorien.filter(function (k) { return k !== kat; });
+            karten.forEach(function (k) {
+              if (k.kategorie === kat) { k.kategorie = ""; beruehrt(k); }
+            });
+            if (aktiveKategorie === kat) aktiveKategorie = null;
+            speichern();
+            zeichnen();
+          });
+        });
+
+        // Suche
+        var suchfeld = el.querySelector("#suchfeld");
+        suchfeld.addEventListener("input", function (e) {
+          filter = e.target.value;
+          var n = suchfeld.selectionStart;
+          zeichnen();
+          var neu = document.getElementById("suchfeld");
+          neu.focus();
+          neu.setSelectionRange(n, n);
+        });
+
+        // Karten: Ereignisse
+        el.querySelectorAll(".karte").forEach(function (div) {
+          var id = div.getAttribute("data-id");
+
+          div.querySelectorAll(".textfeld[data-feld]").forEach(function (tf) {
+            tf.addEventListener("input", function () {
+              var k = karten.find(function (x) { return x.id === id; });
+              if (!k) return;
+              k[tf.getAttribute("data-feld")] = tf.innerHTML;
+              beruehrt(k);
+              speichern();
+            });
+            // Beim Verlassen des Feldes sofort endgültig sichern
+            tf.addEventListener("blur", function () {
+              spuelen().then(function () { if (dateiTimer) dateiSchreiben(); });
+            });
+          });
+
+          // Ziehbare Spaltentrenner (stabil: Position relativ zur Karte gemessen)
+          div.querySelectorAll(".trenner").forEach(function (t) {
+            var ziehen = false;
+            var links = null, karteLinks = 0, linksLinks = 0;
+            t.addEventListener("mousedown", function (e) {
+              links = t.previousElementSibling;
+              if (!links) return;
+              ziehen = true;
+              e.preventDefault();
+              document.body.style.cursor = "col-resize";
+              document.body.style.userSelect = "none";
+              karteLinks = div.getBoundingClientRect().left;
+              linksLinks = links.getBoundingClientRect().left - karteLinks;
+            });
+            document.addEventListener("mousemove", function (e) {
+              if (!ziehen || !links) return;
+              var breite = e.clientX - karteLinks - linksLinks;
+              if (breite < 90) breite = 90; // Minimum, damit nichts kollabiert
+              links.style.flex = "0 0 " + breite + "px";
+            });
+            document.addEventListener("mouseup", function () {
+              ziehen = false;
+              links = null;
+              document.body.style.cursor = "";
+              document.body.style.userSelect = "";
+            });
+          });
+
+          var zoom = div.querySelector(".zoom-ausloeser");
+          if (zoom) zoom.addEventListener("click", function () {
+            document.getElementById("zoom-bild").src = zoom.src;
+            document.getElementById("zoom-hg").classList.remove("versteckt");
+          });
+          var weg = div.querySelector(".bild-weg");
+          if (weg) weg.addEventListener("click", function () {
+            var k = karten.find(function (x) { return x.id === id; });
+            if (k) { k.bild = null; beruehrt(k); speichern(); zeichnen(); }
+          });
+          var neuBild = div.querySelector(".bild-neu-input");
+          if (neuBild) neuBild.addEventListener("change", function () {
+            bildErsetzen(id, neuBild.files[0]);
+          });
+
+          // Audio: abspielen, hinzufügen, entfernen
+          var audioPlay = div.querySelector(".audio-play");
+          if (audioPlay) {
+            var ad = null, spielt = false;
+            audioPlay.addEventListener("click", function () {
+              var k = karten.find(function (x) { return x.id === id; });
+              if (!k || !k.audio) return;
+              if (!ad) {
+                ad = new Audio(k.audio);
+                ad.addEventListener("ended", function () {
+                  spielt = false; audioPlay.textContent = "▶ Audio";
+                });
+              }
+              if (spielt) { ad.pause(); ad.currentTime = 0; spielt = false; audioPlay.textContent = "▶ Audio"; }
+              else { ad.play(); spielt = true; audioPlay.textContent = "⏸ Anhalten"; }
+            });
+          }
+          var audioWeg = div.querySelector(".audio-weg");
+          if (audioWeg) audioWeg.addEventListener("click", function () {
+            var k = karten.find(function (x) { return x.id === id; });
+            if (k) { k.audio = null; beruehrt(k); speichern(); zeichnen(); }
+          });
+          var audioNeu = div.querySelector(".audio-neu-input");
+          if (audioNeu) audioNeu.addEventListener("change", function () {
+            var f = audioNeu.files[0];
+            if (!f) return;
+            if (f.size > 5 * 1024 * 1024) { alert("Diese Audiodatei ist sehr groß (über 5 MB). Bitte eine kleinere Datei nehmen, damit der Speicher nicht zu schnell voll wird."); return; }
+            dateiZuBild(f).then(function (url) {
+              var k = karten.find(function (x) { return x.id === id; });
+              if (k) { k.audio = url; beruehrt(k); speichern(); zeichnen(); }
+            });
+          });
+
+          var wahl = div.querySelector(".kat-wahl");
+          if (wahl) wahl.addEventListener("change", function () {
+            var k = karten.find(function (x) { return x.id === id; });
+            if (!k) return;
+            k.kategorie = wahl.value;
+            beruehrt(k);
+            speichern();
+            zeichnen();
+          });
+
+          div.querySelector(".loeschen").addEventListener("click", function () {
+            if (confirm("Diese Karte wirklich löschen?")) {
+              karten = karten.filter(function (x) { return x.id !== id; });
+              speichern(); zeichnen();
+            }
+          });
+        });
+      }
+
+      // ---------- Kopfzeile ----------
+      document.getElementById("reiter-neu").addEventListener("click", function () {
+        ansicht = "neu"; umschalten(this); zeichnen();
+      });
+      document.getElementById("reiter-karten").addEventListener("click", function () {
+        ansicht = "karten"; umschalten(this); zeichnen();
+      });
+      document.getElementById("zoom-zu").addEventListener("click", function () {
+        document.getElementById("zoom-hg").classList.add("versteckt");
+      });
+      document.getElementById("zoom-hg").addEventListener("click", function (e) {
+        if (e.target === this) this.classList.add("versteckt");
+      });
+      function umschalten(btn) {
+        document.getElementById("reiter-neu").classList.remove("aktiv");
+        document.getElementById("reiter-karten").classList.remove("aktiv");
+        btn.classList.add("aktiv");
+      }
+
+      document.getElementById("btn-daten").addEventListener("click", datenDialog);
+      document.getElementById("btn-einstellungen").addEventListener("click", einstellungenDialog);
+      start();
+    </script>
+  </body>
+</html>
