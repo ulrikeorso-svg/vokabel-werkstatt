@@ -1,0 +1,27 @@
+{
+  "name": "vokabel-werkstatt",
+  "productName": "Vokabel-Werkstatt",
+  "version": "3.0.0",
+  "description": "Vokabel-Werkstatt - franzoesische Bildvokabeln erfassen und lernen (Desktop)",
+  "main": "main.js",
+  "author": "Ulrike Orso",
+  "license": "MIT",
+  "scripts": {
+    "start": "electron .",
+    "build": "electron-builder --linux deb appimage"
+  },
+  "devDependencies": {
+    "electron": "33.2.0",
+    "electron-builder": "25.1.8"
+  },
+  "dependencies": {
+    "better-sqlite3": "11.3.0"
+  },
+  "build": {
+    "appId": "de.ulrike.vokabelwerkstatt",
+    "productName": "vokabel-werkstatt",
+    "files": ["index.html", "main.js", "preload.js", "node_modules/**/*"],
+    "linux": { "category": "Education", "target": ["deb", "AppImage"] },
+    "directories": { "output": "dist" }
+  }
+}
