@@ -4,7 +4,7 @@
   "version": "3.0.0",
   "description": "Vokabel-Werkstatt - franzoesische Bildvokabeln erfassen und lernen (Desktop)",
   "main": "main.js",
-  "author": "Ulrike Orso",
+  "author": "author": { "name": "Ulrike Orso", "email": "ulrikeorso-svg@users.noreply.github.com" },
   "license": "MIT",
   "scripts": {
     "start": "electron .",
