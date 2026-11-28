@@ -1057,7 +1057,7 @@
             '" style="color:' + f[1] + ';font-weight:700;">A</button>';
         });
         el.innerHTML = html;
-        el.querySelectorAll(".zchn").forEach(function (b) {
+        el.querySelectorAll(".zchn:not(.fmt)").forEach(function (b) {
           b.addEventListener("mousedown", function (e) { e.preventDefault(); }); // Fokus im Textfeld halten
           b.addEventListener("click", function () {
             var ziel = letztesFeld;
